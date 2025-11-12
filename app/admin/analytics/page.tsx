@@ -667,35 +667,35 @@ export default function AnalyticsPage() {
                 
                 <div className="grid md:grid-cols-3 gap-4 mb-4">
                   <div className="bg-white p-4 rounded-lg">
-                    <div className="text-sm text-slate-600 mb-1">⚡ Terlalu Cepat</div>
-                    <div className="text-sm text-slate-500 mb-2">(&lt; 3 menit)</div>
+                    <div className="text-sm text-slate-600 mb-1">⚠️ Suspicious</div>
+                    <div className="text-sm text-slate-500 mb-2">(Terlalu cepat/lambat)</div>
                     <div className="text-3xl font-bold text-orange-600">
-                      {participants.filter(p => p.response_quality === 'too_fast').length}
+                      {participants.filter(p => p.response_quality === 'suspicious').length}
                     </div>
                     <div className="text-sm text-slate-500">
-                      ({((participants.filter(p => p.response_quality === 'too_fast').length / participants.length) * 100).toFixed(1)}%)
+                      ({participants.length > 0 ? ((participants.filter(p => p.response_quality === 'suspicious').length / participants.length) * 100).toFixed(1) : 0}%)
                     </div>
                   </div>
                   
                   <div className="bg-white p-4 rounded-lg">
-                    <div className="text-sm text-slate-600 mb-1">✅ Normal</div>
-                    <div className="text-sm text-slate-500 mb-2">(3-30 menit)</div>
+                    <div className="text-sm text-slate-600 mb-1">✅ Good</div>
+                    <div className="text-sm text-slate-500 mb-2">(Kualitas baik)</div>
                     <div className="text-3xl font-bold text-green-600">
-                      {participants.filter(p => p.response_quality === 'normal').length}
+                      {participants.filter(p => p.response_quality === 'good').length}
                     </div>
                     <div className="text-sm text-slate-500">
-                      ({((participants.filter(p => p.response_quality === 'normal').length / participants.length) * 100).toFixed(1)}%)
+                      ({participants.length > 0 ? ((participants.filter(p => p.response_quality === 'good').length / participants.length) * 100).toFixed(1) : 0}%)
                     </div>
                   </div>
                   
                   <div className="bg-white p-4 rounded-lg">
-                    <div className="text-sm text-slate-600 mb-1">🐌 Terlalu Lambat</div>
-                    <div className="text-sm text-slate-500 mb-2">(&gt; 30 menit)</div>
-                    <div className="text-3xl font-bold text-blue-600">
-                      {participants.filter(p => p.response_quality === 'too_slow').length}
+                    <div className="text-sm text-slate-600 mb-1">❌ Invalid</div>
+                    <div className="text-sm text-slate-500 mb-2">(Tidak valid)</div>
+                    <div className="text-3xl font-bold text-red-600">
+                      {participants.filter(p => p.response_quality === 'invalid').length}
                     </div>
                     <div className="text-sm text-slate-500">
-                      ({((participants.filter(p => p.response_quality === 'too_slow').length / participants.length) * 100).toFixed(1)}%)
+                      ({participants.length > 0 ? ((participants.filter(p => p.response_quality === 'invalid').length / participants.length) * 100).toFixed(1) : 0}%)
                     </div>
                   </div>
                 </div>
