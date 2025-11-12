@@ -229,7 +229,7 @@ export default function AdminDashboard() {
                 href="/admin/analytics"
                 className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 py-2.5 rounded-xl transition shadow-md hover:shadow-lg text-center"
               >
-                📊 Analytics & Quality
+                📊 Analitik & Kualitas
               </Link>
               <Link
                 href="/admin/questions"
