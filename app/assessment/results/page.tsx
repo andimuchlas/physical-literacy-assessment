@@ -10,7 +10,7 @@ import {
   getDigitSpanCategory,
   getWeakDomains
 } from '@/lib/scoring';
-import { calculatePsychologicalScore, calculateSocialScore } from '@/lib/scoring';
+import { calculatePsychologicalScore, calculateSocialScore, reversePsychologicalOrder, reverseSocialOrder } from '@/lib/scoring';
 
 interface ScoreData {
   cognitive: number;
@@ -94,6 +94,35 @@ export default function ResultsPage() {
         social: socialScore,
         digitSpan: digitSpanScore
       });
+
+      // Debug: show per-question mapping (id, order_index, domain, raw answer, scored value)
+      try {
+        const questionDebug = (questions as any[])
+          .filter((q: any) => q.domain === 'psychological' || q.domain === 'social')
+          .map((q: any) => {
+            const raw = (answers[q.id] !== undefined && answers[q.id] !== null) ? Number(answers[q.id]) : 0;
+            const isPsych = q.domain === 'psychological';
+            const isSocial = q.domain === 'social';
+            const scored = isPsych
+              ? (reversePsychologicalOrder.includes(q.order_index) ? (4 - raw) : raw)
+              : (reverseSocialOrder.includes(q.order_index) ? (4 - raw) : raw);
+            return {
+              id: q.id,
+              order_index: q.order_index,
+              domain: q.domain,
+              rawAnswer: raw,
+              scoredValue: scored
+            };
+          });
+
+        console.group('%cScoring debug (psychological & social)', 'color: #2b6cb0; font-weight: bold');
+        console.log('Reverse psychological order indices:', reversePsychologicalOrder);
+        console.log('Reverse social order indices:', reverseSocialOrder);
+        console.table(questionDebug);
+        console.groupEnd();
+      } catch (e) {
+        console.warn('Could not print scoring debug:', e);
+      }
 
       // Auto-save to database (only if not already saved)
       if (!alreadySaved) {
