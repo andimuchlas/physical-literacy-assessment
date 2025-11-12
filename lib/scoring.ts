@@ -120,19 +120,21 @@ export function getWeakDomains(
   return weakDomains;
 }
 
-// Reverse-scored question IDs (Likert 0-4 scale).
-export const reversePsychologicalQuestions = [2, 6, 17, 18];
-export const reverseSocialQuestions = [12, 16];
+// Reverse-scored question order_index within each domain (Likert 0-4 scale).
+// These numbers refer to the question's `order_index` in the domain, not global DB id.
+export const reversePsychologicalOrder = [2, 6, 17, 18];
+export const reverseSocialOrder = [12, 16];
 
 // Helper to compute psychological score from answers and question list.
 // answers: record of questionId -> numeric answer (0-4)
-// questions: array of question objects with at least an `id` and `domain` property
+// questions: array of question objects with at least an `id`, `domain` and `order_index` property
 export function calculatePsychologicalScore(answers: Record<number, number> | any, questions: any[]): number {
   let psychologicalScore = 0;
   const psychologicalQuestions = questions.filter(q => q.domain === 'psychological');
   psychologicalQuestions.forEach(q => {
     const raw = (answers[q.id] !== undefined && answers[q.id] !== null) ? Number(answers[q.id]) : 0;
-    const value = reversePsychologicalQuestions.includes(q.id) ? (4 - raw) : raw;
+    // FIXED: use order_index (not q.id) to determine reverse-scored items
+    const value = reversePsychologicalOrder.includes(q.order_index) ? (4 - raw) : raw;
     psychologicalScore += value;
   });
   return psychologicalScore;
@@ -143,7 +145,8 @@ export function calculateSocialScore(answers: Record<number, number> | any, ques
   const socialQuestions = questions.filter(q => q.domain === 'social');
   socialQuestions.forEach(q => {
     const raw = (answers[q.id] !== undefined && answers[q.id] !== null) ? Number(answers[q.id]) : 0;
-    const value = reverseSocialQuestions.includes(q.id) ? (4 - raw) : raw;
+    // FIXED: use order_index (not q.id) to determine reverse-scored items
+    const value = reverseSocialOrder.includes(q.order_index) ? (4 - raw) : raw;
     socialScore += value;
   });
   return socialScore;
