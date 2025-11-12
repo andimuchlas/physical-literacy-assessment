@@ -81,10 +81,21 @@ export default function DigitSpanPage() {
         setGameState('idle');
       }, 1500);
     } else {
+      // If wrong in forward mode, immediately switch to reversed mode
       setGameState('wrong');
-      setTimeout(() => {
-        setGameState('idle');
-      }, 1500);
+      if (mode === 'forward') {
+        // brief pause to show wrong feedback, then switch to reversed mode
+        setTimeout(() => {
+          setMode('reversed');
+          setCurrentSpan(3);
+          setGameState('idle');
+        }, 1200);
+      } else {
+        // In reversed mode, just show wrong feedback and allow retry
+        setTimeout(() => {
+          setGameState('idle');
+        }, 1500);
+      }
     }
   };
 

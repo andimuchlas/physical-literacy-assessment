@@ -119,3 +119,32 @@ export function getWeakDomains(
   
   return weakDomains;
 }
+
+// Reverse-scored question IDs (Likert 0-4 scale).
+export const reversePsychologicalQuestions = [2, 6, 17, 18];
+export const reverseSocialQuestions = [12, 16];
+
+// Helper to compute psychological score from answers and question list.
+// answers: record of questionId -> numeric answer (0-4)
+// questions: array of question objects with at least an `id` and `domain` property
+export function calculatePsychologicalScore(answers: Record<number, number> | any, questions: any[]): number {
+  let psychologicalScore = 0;
+  const psychologicalQuestions = questions.filter(q => q.domain === 'psychological');
+  psychologicalQuestions.forEach(q => {
+    const raw = (answers[q.id] !== undefined && answers[q.id] !== null) ? Number(answers[q.id]) : 0;
+    const value = reversePsychologicalQuestions.includes(q.id) ? (4 - raw) : raw;
+    psychologicalScore += value;
+  });
+  return psychologicalScore;
+}
+
+export function calculateSocialScore(answers: Record<number, number> | any, questions: any[]): number {
+  let socialScore = 0;
+  const socialQuestions = questions.filter(q => q.domain === 'social');
+  socialQuestions.forEach(q => {
+    const raw = (answers[q.id] !== undefined && answers[q.id] !== null) ? Number(answers[q.id]) : 0;
+    const value = reverseSocialQuestions.includes(q.id) ? (4 - raw) : raw;
+    socialScore += value;
+  });
+  return socialScore;
+}

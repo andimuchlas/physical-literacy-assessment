@@ -10,6 +10,7 @@ import {
   getDigitSpanCategory,
   getWeakDomains
 } from '@/lib/scoring';
+import { calculatePsychologicalScore, calculateSocialScore } from '@/lib/scoring';
 
 interface ScoreData {
   cognitive: number;
@@ -78,18 +79,11 @@ export default function ResultsPage() {
       });
 
       // Calculate psychological score (sum of Likert values, max 80)
-      let psychologicalScore = 0;
-      const psychologicalQuestions = questions.filter(q => q.domain === 'psychological');
-      psychologicalQuestions.forEach(q => {
-        psychologicalScore += (answers[q.id] || 0);
-      });
+      // Uses centralized helper which applies reverse scoring for configured items
+      const psychologicalScore = calculatePsychologicalScore(answers, questions as any);
 
       // Calculate social score (sum of Likert values, max 80)
-      let socialScore = 0;
-      const socialQuestions = questions.filter(q => q.domain === 'social');
-      socialQuestions.forEach(q => {
-        socialScore += (answers[q.id] || 0);
-      });
+      const socialScore = calculateSocialScore(answers, questions as any);
 
       // Get digit span score
       const digitSpanScore = parseInt(sessionStorage.getItem('digitSpanScore') || '0');
