@@ -14,9 +14,18 @@ import Link from 'next/link';
 export default function AdminDashboard() {
   const router = useRouter();
   const [participants, setParticipants] = useState<Participant[]>([]);
+  const [filteredParticipants, setFilteredParticipants] = useState<Participant[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingParticipant, setEditingParticipant] = useState<Participant | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
+  
+  // Filter states
+  const [searchQuery, setSearchQuery] = useState('');
+  const [genderFilter, setGenderFilter] = useState<string>('all');
+  const [ageMin, setAgeMin] = useState('');
+  const [ageMax, setAgeMax] = useState('');
+  const [qualityFilter, setQualityFilter] = useState<string>('all');
+  
   const [stats, setStats] = useState({
     total: 0,
     avgCognitive: 0,
@@ -30,6 +39,59 @@ export default function AdminDashboard() {
     loadData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Apply filters whenever search/filter changes
+  useEffect(() => {
+    applyFilters();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchQuery, genderFilter, ageMin, ageMax, qualityFilter, participants]);
+
+  const applyFilters = () => {
+    let filtered = [...participants];
+
+    // Search by name
+    if (searchQuery.trim()) {
+      filtered = filtered.filter(p => 
+        p.name.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+
+    // Filter by gender
+    if (genderFilter !== 'all') {
+      filtered = filtered.filter(p => p.gender === genderFilter);
+    }
+
+    // Filter by age range
+    if (ageMin) {
+      filtered = filtered.filter(p => p.age >= parseInt(ageMin));
+    }
+    if (ageMax) {
+      filtered = filtered.filter(p => p.age <= parseInt(ageMax));
+    }
+
+    // Filter by quality
+    if (qualityFilter === 'valid') {
+      filtered = filtered.filter(p => 
+        !p.has_straight_lining && p.response_quality === 'normal'
+      );
+    } else if (qualityFilter === 'flagged') {
+      filtered = filtered.filter(p => 
+        p.has_straight_lining || 
+        p.response_quality === 'too_fast' || 
+        p.response_quality === 'too_slow'
+      );
+    }
+
+    setFilteredParticipants(filtered);
+  };
+
+  const clearFilters = () => {
+    setSearchQuery('');
+    setGenderFilter('all');
+    setAgeMin('');
+    setAgeMax('');
+    setQualityFilter('all');
+  };
 
   const checkAuth = async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -347,6 +409,101 @@ export default function AdminDashboard() {
               </button>
             </div>
           </div>
+
+          {/* Filter Section */}
+          <div className="bg-slate-50 p-4 sm:p-6 border-b-2 border-gray-200">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+              <h3 className="text-lg font-bold text-gray-900">🔍 Filter & Pencarian</h3>
+              {(searchQuery || genderFilter !== 'all' || ageMin || ageMax || qualityFilter !== 'all') && (
+                <button
+                  onClick={clearFilters}
+                  className="text-sm text-red-600 hover:text-red-800 font-semibold underline"
+                >
+                  ✕ Hapus Semua Filter
+                </button>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+              {/* Search by name */}
+              <div className="lg:col-span-2">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Cari Nama
+                </label>
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Ketik nama peserta..."
+                  className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+                />
+              </div>
+
+              {/* Gender filter */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Jenis Kelamin
+                </label>
+                <select
+                  value={genderFilter}
+                  onChange={(e) => setGenderFilter(e.target.value)}
+                  className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+                >
+                  <option value="all">Semua</option>
+                  <option value="L">Laki-laki</option>
+                  <option value="P">Perempuan</option>
+                </select>
+              </div>
+
+              {/* Age range */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Umur (Min-Max)
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="number"
+                    value={ageMin}
+                    onChange={(e) => setAgeMin(e.target.value)}
+                    placeholder="Min"
+                    className="w-1/2 px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+                    min="5"
+                    max="20"
+                  />
+                  <input
+                    type="number"
+                    value={ageMax}
+                    onChange={(e) => setAgeMax(e.target.value)}
+                    placeholder="Max"
+                    className="w-1/2 px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+                    min="5"
+                    max="20"
+                  />
+                </div>
+              </div>
+
+              {/* Quality filter */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Kualitas Data
+                </label>
+                <select
+                  value={qualityFilter}
+                  onChange={(e) => setQualityFilter(e.target.value)}
+                  className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+                >
+                  <option value="all">Semua</option>
+                  <option value="valid">✅ Valid Saja</option>
+                  <option value="flagged">⚠️ Bermasalah Saja</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Results count */}
+            <div className="mt-4 text-sm text-gray-700">
+              Menampilkan <span className="font-bold text-blue-600">{filteredParticipants.length}</span> dari <span className="font-bold">{participants.length}</span> peserta
+            </div>
+          </div>
           
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y-2 divide-gray-200">
@@ -379,7 +536,24 @@ export default function AdminDashboard() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y-2 divide-gray-100">
-                {participants.map((participant) => (
+                {filteredParticipants.length === 0 ? (
+                  <tr>
+                    <td colSpan={8} className="px-6 py-8 text-center text-gray-500">
+                      {participants.length === 0 ? (
+                        <div>
+                          <p className="text-lg font-semibold mb-2">Belum ada data</p>
+                          <p className="text-sm">Data peserta akan muncul di sini setelah ada yang menyelesaikan assessment</p>
+                        </div>
+                      ) : (
+                        <div>
+                          <p className="text-lg font-semibold mb-2">Tidak ada hasil</p>
+                          <p className="text-sm">Coba ubah filter pencarian Anda</p>
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                ) : (
+                  filteredParticipants.map((participant) => (
                   <tr key={participant.id} className="hover:bg-blue-50 transition">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-bold text-gray-900">{participant.name}</div>
@@ -435,15 +609,10 @@ export default function AdminDashboard() {
                       </div>
                     </td>
                   </tr>
-                ))}
+                ))
+                )}
               </tbody>
             </table>
-
-            {participants.length === 0 && (
-              <div className="text-center py-12 text-gray-500">
-                Belum ada data peserta
-              </div>
-            )}
           </div>
         </div>
       </main>

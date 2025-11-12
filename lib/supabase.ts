@@ -10,10 +10,14 @@ export interface Participant {
   id: number;
   name: string;
   age: number;
+  gender?: string;
   cognitive_score: number;
   psychological_score: number;
   social_score: number;
   digit_span_score: number;
+  response_time_seconds?: number;
+  has_straight_lining?: boolean;
+  response_quality?: string;
   created_at: string;
 }
 

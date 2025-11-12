@@ -8,7 +8,9 @@ export default function BiodataPage() {
   const router = useRouter();
   const [name, setName] = useState('');
   const [age, setAge] = useState('');
+  const [gender, setGender] = useState('');
   const [error, setError] = useState('');
+  const [startTime] = useState(Date.now());
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,20 +25,27 @@ export default function BiodataPage() {
       setError('Umur harus antara 5-20 tahun');
       return;
     }
+
+    if (!gender) {
+      setError('Jenis kelamin harus dipilih');
+      return;
+    }
     
     // Store biodata in sessionStorage
     sessionStorage.setItem('participantName', name);
     sessionStorage.setItem('participantAge', age);
+    sessionStorage.setItem('participantGender', gender);
+    sessionStorage.setItem('assessmentStartTime', startTime.toString());
     
     // Navigate to questionnaire
     router.push('/assessment/questionnaire');
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center p-4">
       <div className="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full">
         <div className="text-center mb-8">
-          <div className="w-20 h-20 bg-indigo-600 rounded-2xl mx-auto mb-4 flex items-center justify-center shadow-lg">
+          <div className="w-20 h-20 bg-blue-600 rounded-2xl mx-auto mb-4 flex items-center justify-center shadow-lg">
             <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
             </svg>
@@ -59,7 +68,7 @@ export default function BiodataPage() {
               id="name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition text-gray-900"
+              className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-gray-900"
               placeholder="Masukkan nama lengkap"
             />
           </div>
@@ -73,11 +82,51 @@ export default function BiodataPage() {
               id="age"
               value={age}
               onChange={(e) => setAge(e.target.value)}
-              className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition text-gray-900"
+              className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-gray-900"
               placeholder="Masukkan umur (5-20 tahun)"
               min="5"
               max="20"
             />
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-gray-900 mb-2">
+              Jenis Kelamin
+            </label>
+            <div className="grid grid-cols-2 gap-4">
+              <button
+                type="button"
+                onClick={() => setGender('L')}
+                className={`px-4 py-3 rounded-xl font-semibold transition border-2 ${
+                  gender === 'L'
+                    ? 'bg-blue-600 text-white border-blue-600'
+                    : 'bg-white text-gray-700 border-gray-300 hover:border-blue-400'
+                }`}
+              >
+                <div className="flex items-center justify-center gap-2">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                  </svg>
+                  Laki-laki
+                </div>
+              </button>
+              <button
+                type="button"
+                onClick={() => setGender('P')}
+                className={`px-4 py-3 rounded-xl font-semibold transition border-2 ${
+                  gender === 'P'
+                    ? 'bg-teal-600 text-white border-teal-600'
+                    : 'bg-white text-gray-700 border-gray-300 hover:border-teal-400'
+                }`}
+              >
+                <div className="flex items-center justify-center gap-2">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                  </svg>
+                  Perempuan
+                </div>
+              </button>
+            </div>
           </div>
 
           {error && (
@@ -88,7 +137,7 @@ export default function BiodataPage() {
 
           <button
             type="submit"
-            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-6 rounded-xl transition duration-300 transform hover:scale-105 shadow-xl"
+            className="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-4 px-6 rounded-xl transition duration-300 transform hover:scale-105 shadow-xl border-2 border-teal-500"
           >
             <div className="flex items-center justify-center gap-2">
               <span>Lanjut ke Assessment</span>
@@ -102,7 +151,7 @@ export default function BiodataPage() {
         <div className="mt-6 text-center">
           <Link
             href="/"
-            className="text-sm text-gray-700 hover:text-gray-900 font-medium transition inline-flex items-center gap-1"
+            className="text-sm text-gray-600 hover:text-gray-900 font-medium transition inline-flex items-center gap-1"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />

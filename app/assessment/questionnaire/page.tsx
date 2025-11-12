@@ -129,7 +129,7 @@ export default function QuestionnairePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-white mx-auto"></div>
           <p className="mt-4 text-white font-semibold text-lg">Memuat pertanyaan...</p>
@@ -139,7 +139,7 @@ export default function QuestionnairePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 py-8 px-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 py-8 px-4">
       <div className="max-w-4xl mx-auto pb-8">
         <div className="bg-white rounded-3xl shadow-2xl p-8">
           {/* Progress indicator */}
@@ -154,7 +154,7 @@ export default function QuestionnairePage() {
             
             <div className="w-full bg-gray-300 rounded-full h-3">
               <div 
-                className="bg-indigo-600 h-3 rounded-full transition-all duration-300"
+                className="bg-teal-600 h-3 rounded-full transition-all duration-300"
                 style={{ 
                   width: currentDomain === 'cognitive' ? '33%' : 
                          currentDomain === 'psychological' ? '66%' : '100%' 
@@ -196,8 +196,8 @@ export default function QuestionnairePage() {
                         key={optIndex}
                         className={`flex items-center p-4 bg-white rounded-xl border-2 cursor-pointer transition-all ${
                           answers[question.id] === optIndex 
-                            ? 'border-indigo-600 bg-indigo-50 shadow-md' 
-                            : 'border-gray-200 hover:border-indigo-400'
+                            ? 'border-blue-600 bg-blue-50 shadow-md' 
+                            : 'border-gray-200 hover:border-blue-400'
                         }`}
                       >
                         <input
@@ -206,7 +206,7 @@ export default function QuestionnairePage() {
                           value={optIndex}
                           checked={answers[question.id] === optIndex}
                           onChange={() => handleAnswer(question.id, optIndex)}
-                          className="mr-3 w-5 h-5 text-indigo-600"
+                          className="mr-3 w-5 h-5 text-blue-600"
                         />
                         <span className="text-gray-900 font-medium">{option}</span>
                       </label>
@@ -236,8 +236,8 @@ export default function QuestionnairePage() {
                           <div 
                             className={`py-4 px-2 rounded-xl border-2 cursor-pointer transition font-bold text-lg ${
                               answers[question.id] === value
-                                ? 'bg-indigo-600 text-white border-indigo-600 shadow-lg transform scale-105'
-                                : 'bg-white text-gray-700 border-gray-300 hover:border-indigo-400'
+                                ? 'bg-teal-600 text-white border-teal-600 shadow-lg transform scale-105'
+                                : 'bg-white text-gray-700 border-gray-300 hover:border-teal-400'
                             }`}
                           >
                             {value}
@@ -277,7 +277,7 @@ export default function QuestionnairePage() {
 
             <button
               onClick={handleNext}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-xl transition duration-300 transform hover:scale-105 shadow-xl flex items-center gap-2"
+              className="bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 px-6 rounded-xl transition duration-300 transform hover:scale-105 shadow-xl flex items-center gap-2"
             >
               <span>{currentDomain === 'social' ? 'Lanjut ke Digit Span Test' : 'Lanjut'}</span>
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

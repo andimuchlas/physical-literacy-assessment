@@ -12,6 +12,34 @@ import {
 } from '@/lib/scoring';
 import { calculatePsychologicalScore, calculateSocialScore, reversePsychologicalOrder, reverseSocialOrder } from '@/lib/scoring';
 
+// Quality indicator functions
+function detectStraightLining(answerValues: number[]): boolean {
+  if (answerValues.length < 5) return false;
+  
+  // Hitung variance (variasi jawaban)
+  const mean = answerValues.reduce((a, b) => a + b, 0) / answerValues.length;
+  const variance = answerValues.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / answerValues.length;
+  
+  // Jika variance terlalu kecil (< 0.5), kemungkinan straight-lining
+  // Contoh: semua jawab 3 → variance = 0
+  // Contoh: jawab [3,3,3,3,2] → variance = 0.16 (masih suspicious)
+  // Contoh: jawab [1,2,3,4,2] → variance = 1.2 (normal)
+  return variance < 0.5;
+}
+
+function analyzeResponseTimeQuality(timeSeconds: number): string {
+  if (timeSeconds === 0) return 'unknown';
+  
+  // Estimasi waktu wajar:
+  // - Minimum: 3 menit (180 detik) untuk 40 soal + digit span
+  // - Normal: 5-15 menit (300-900 detik)
+  // - Maximum reasonable: 30 menit (1800 detik)
+  
+  if (timeSeconds < 180) return 'too_fast'; // < 3 menit = mencurigakan
+  if (timeSeconds > 1800) return 'too_slow'; // > 30 menit = mungkin tidak fokus
+  return 'normal';
+}
+
 interface ScoreData {
   cognitive: number;
   psychological: number;
@@ -154,17 +182,44 @@ export default function ResultsPage() {
       console.log('🔄 Mulai menyimpan data ke database...');
       console.log('📊 Data yang akan disimpan:', { name, age, cogScore, psyScore, socScore, digScore });
 
-      // Insert participant
+      // Get gender and calculate response time
+      const gender = sessionStorage.getItem('participantGender') || '';
+      const startTimeStr = sessionStorage.getItem('assessmentStartTime');
+      const endTime = Date.now();
+      const responseTimeSeconds = startTimeStr 
+        ? Math.round((endTime - parseInt(startTimeStr)) / 1000)
+        : 0;
+
+      console.log('👤 Gender:', gender || '(tidak diisi)');
+      console.log('⏱️ Response time:', responseTimeSeconds, 'seconds');
+
+      // === QUALITY INDICATORS ===
+      // 1. Detect straight-lining (responden jawab sama terus)
+      const answerValues = Object.values(answers).filter((v): v is number => typeof v === 'number');
+      const hasStraightLining = detectStraightLining(answerValues);
+      
+      // 2. Analyze response time quality
+      const responseQuality = analyzeResponseTimeQuality(responseTimeSeconds);
+      
+      console.log('🔍 Quality Indicators:');
+      console.log('  - Straight-lining:', hasStraightLining ? '⚠️ DETECTED' : '✅ OK');
+      console.log('  - Response quality:', responseQuality);
+
+      // Insert participant with quality indicators
       const { data: participant, error: participantError } = await supabase
         .from('participants')
         .insert([
           {
             name,
             age,
+            gender: gender || null,
             cognitive_score: cogScore,
             psychological_score: psyScore,
             social_score: socScore,
-            digit_span_score: digScore
+            digit_span_score: digScore,
+            response_time_seconds: responseTimeSeconds,
+            has_straight_lining: hasStraightLining,
+            response_quality: responseQuality
           }
         ])
         .select()
@@ -261,7 +316,7 @@ export default function ResultsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-white mx-auto"></div>
           <p className="mt-4 text-white font-semibold text-lg">Menghitung hasil...</p>
@@ -272,12 +327,12 @@ export default function ResultsPage() {
 
   if (!scores) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center">
         <div className="text-center bg-white p-8 rounded-3xl shadow-2xl max-w-md">
           <p className="text-red-700 font-semibold mb-4">Terjadi kesalahan. Silakan mulai ulang assessment.</p>
           <button
             onClick={() => router.push('/assessment')}
-            className="bg-indigo-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-indigo-700 transition"
+            className="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-blue-700 transition"
           >
             Mulai Ulang
           </button>
@@ -302,12 +357,12 @@ export default function ResultsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 py-8 px-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 py-8 px-4">
       <div className="max-w-4xl mx-auto">
         <div className="bg-white rounded-3xl shadow-2xl p-8">
           {/* Header */}
           <div className="text-center mb-8">
-            <div className="w-24 h-24 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-2xl mx-auto mb-4 flex items-center justify-center shadow-lg">
+            <div className="w-24 h-24 bg-gradient-to-br from-blue-600 to-teal-600 rounded-2xl mx-auto mb-4 flex items-center justify-center shadow-lg">
               <svg className="w-16 h-16 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
               </svg>
@@ -417,7 +472,7 @@ export default function ResultsPage() {
           <div className="flex flex-col sm:flex-row gap-4">
             <button
               onClick={handleNewAssessment}
-              className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-6 rounded-xl transition duration-300 shadow-lg"
+              className="flex-1 bg-teal-600 hover:bg-teal-700 text-white font-bold py-4 px-6 rounded-xl transition duration-300 shadow-lg"
             >
               Assessment Baru
             </button>

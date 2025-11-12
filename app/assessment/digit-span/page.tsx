@@ -133,10 +133,10 @@ export default function DigitSpanPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center p-4">
       <div className="bg-white rounded-3xl shadow-2xl p-8 max-w-2xl w-full">
         <div className="text-center mb-8">
-          <div className="w-20 h-20 bg-gradient-to-br from-purple-600 to-pink-600 rounded-2xl mx-auto mb-4 flex items-center justify-center shadow-lg">
+          <div className="w-20 h-20 bg-gradient-to-br from-blue-600 to-teal-600 rounded-2xl mx-auto mb-4 flex items-center justify-center shadow-lg">
             <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
             </svg>
@@ -149,8 +149,8 @@ export default function DigitSpanPage() {
               ? 'Hafalkan urutan angka dan ketik sesuai urutan yang muncul'
               : 'Hafalkan urutan angka dan ketik dengan urutan TERBALIK'}
           </p>
-          <div className="mt-4 inline-block bg-gradient-to-r from-purple-100 to-pink-100 px-6 py-3 rounded-full border-2 border-purple-200">
-            <span className="font-bold text-purple-900">
+          <div className="mt-4 inline-block bg-gradient-to-r from-blue-100 to-teal-100 px-6 py-3 rounded-full border-2 border-blue-200">
+            <span className="font-bold text-blue-900">
               Mode: {mode === 'forward' ? 'Forward' : 'Reversed'} | Span: {currentSpan} digit
             </span>
           </div>
@@ -161,7 +161,7 @@ export default function DigitSpanPage() {
             {/* Display area */}
             <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-12 mb-6 text-center min-h-[250px] flex items-center justify-center border-2 border-gray-200 shadow-inner">
               {gameState === 'showing' && displayedDigit !== null && (
-                <div className="text-9xl font-bold text-indigo-600 animate-pulse">
+                <div className="text-9xl font-bold text-blue-600 animate-pulse">
                   {displayedDigit}
                 </div>
               )}
@@ -176,7 +176,7 @@ export default function DigitSpanPage() {
                   </p>
                   <button
                     onClick={startRound}
-                    className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold py-4 px-8 rounded-xl transition duration-300 transform hover:scale-105 shadow-lg"
+                    className="bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700 text-white font-bold py-4 px-8 rounded-xl transition duration-300 transform hover:scale-105 shadow-lg"
                   >
                     Mulai Round
                   </button>
@@ -192,7 +192,7 @@ export default function DigitSpanPage() {
                     type="text"
                     value={userInput}
                     onChange={(e) => setUserInput(e.target.value.replace(/[^0-9]/g, ''))}
-                    className="w-full text-center text-4xl font-bold px-4 py-4 border-2 border-purple-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none text-gray-900 bg-white"
+                    className="w-full text-center text-4xl font-bold px-4 py-4 border-2 border-blue-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-900 bg-white"
                     placeholder="0123456789"
                     maxLength={currentSpan}
                     autoFocus
@@ -202,7 +202,7 @@ export default function DigitSpanPage() {
                     disabled={userInput.length !== currentSpan}
                     className={`mt-4 w-full py-4 px-6 rounded-xl font-bold transition ${
                       userInput.length === currentSpan
-                        ? 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg'
+                        ? 'bg-teal-600 hover:bg-teal-700 text-white shadow-lg'
                         : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                     }`}
                   >
@@ -249,7 +249,7 @@ export default function DigitSpanPage() {
               {mode === 'forward' && maxSpanForward > 0 && (
                 <button
                   onClick={handleModeSwitch}
-                  className="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-6 rounded-lg transition"
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition"
                 >
                   Lanjut ke Mode Reversed
                 </button>
@@ -280,7 +280,7 @@ export default function DigitSpanPage() {
             </h2>
             <div className="bg-gray-50 p-6 rounded-lg mb-6">
               <p className="text-gray-600 mb-2">Skor Anda:</p>
-              <p className="text-4xl font-bold text-purple-600">
+              <p className="text-4xl font-bold text-teal-600">
                 {Math.max(maxSpanForward, maxSpanReversed)} digit
               </p>
               <div className="mt-4 text-sm text-gray-500">
