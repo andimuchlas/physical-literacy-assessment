@@ -27,17 +27,17 @@ function detectStraightLining(answerValues: number[]): boolean {
   return variance < 0.5;
 }
 
-function analyzeResponseTimeQuality(timeSeconds: number): string {
-  if (timeSeconds === 0) return 'unknown';
+function analyzeResponseTimeQuality(timeSeconds: number): 'good' | 'suspicious' | 'invalid' {
+  if (timeSeconds === 0) return 'good'; // Jika tidak ada data waktu, anggap good
   
   // Estimasi waktu wajar:
   // - Minimum: 3 menit (180 detik) untuk 40 soal + digit span
   // - Normal: 5-15 menit (300-900 detik)
   // - Maximum reasonable: 30 menit (1800 detik)
   
-  if (timeSeconds < 180) return 'too_fast'; // < 3 menit = mencurigakan
-  if (timeSeconds > 1800) return 'too_slow'; // > 30 menit = mungkin tidak fokus
-  return 'normal';
+  if (timeSeconds < 180) return 'suspicious'; // < 3 menit = mencurigakan (terlalu cepat)
+  if (timeSeconds > 1800) return 'suspicious'; // > 30 menit = mencurigakan (mungkin tidak fokus)
+  return 'good'; // Normal/good quality
 }
 
 interface ScoreData {

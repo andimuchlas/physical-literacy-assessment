@@ -6,6 +6,25 @@ import { calculateDescriptiveStats, generateSampleCharacteristics, detectStraigh
 import { useRouter } from 'next/navigation';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
 
+// Custom Tooltip dengan kontras warna lebih baik
+const CustomTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-white p-4 rounded-lg shadow-xl border-2 border-slate-300">
+        <p className="font-bold text-slate-900 mb-2">{label}</p>
+        {payload.map((entry: any, index: number) => (
+          <p key={index} className="font-semibold" style={{ 
+            color: entry.dataKey === 'Laki-laki' ? '#1e40af' : '#be185d' // Dark blue & dark pink
+          }}>
+            {entry.name}: {typeof entry.value === 'number' ? entry.value.toFixed(2) : entry.value}
+          </p>
+        ))}
+      </div>
+    );
+  }
+  return null;
+};
+
 interface ParticipantData {
   id: number;
   name: string;
@@ -379,7 +398,7 @@ export default function AnalyticsPage() {
                           <CartesianGrid strokeDasharray="3 3" />
                           <XAxis dataKey="name" />
                           <YAxis />
-                          <Tooltip />
+                          <Tooltip content={<CustomTooltip />} />
                           <Bar dataKey="value" radius={[10, 10, 0, 0]}>
                             {[
                               { name: 'Laki-laki', value: maleCount, fill: '#3b82f6' },
@@ -458,7 +477,7 @@ export default function AnalyticsPage() {
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="domain" />
                         <YAxis />
-                        <Tooltip />
+                        <Tooltip content={<CustomTooltip />} />
                         <Legend />
                         <Bar dataKey="Laki-laki" fill="#3b82f6" radius={[10, 10, 0, 0]} />
                         <Bar dataKey="Perempuan" fill="#ec4899" radius={[10, 10, 0, 0]} />

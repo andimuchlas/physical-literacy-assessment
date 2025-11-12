@@ -72,13 +72,13 @@ export default function AdminDashboard() {
     // Filter by quality
     if (qualityFilter === 'valid') {
       filtered = filtered.filter(p => 
-        !p.has_straight_lining && p.response_quality === 'normal'
+        !p.has_straight_lining && p.response_quality === 'good'
       );
     } else if (qualityFilter === 'flagged') {
       filtered = filtered.filter(p => 
         p.has_straight_lining || 
-        p.response_quality === 'too_fast' || 
-        p.response_quality === 'too_slow'
+        p.response_quality === 'suspicious' || 
+        p.response_quality === 'invalid'
       );
     }
 
