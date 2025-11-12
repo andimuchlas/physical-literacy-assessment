@@ -226,6 +226,12 @@ export default function AdminDashboard() {
             </h1>
             <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
               <Link
+                href="/admin/analytics"
+                className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 py-2.5 rounded-xl transition shadow-md hover:shadow-lg text-center"
+              >
+                📊 Analytics & Quality
+              </Link>
+              <Link
                 href="/admin/questions"
                 className="bg-green-600 hover:bg-green-700 text-white font-bold px-5 py-2.5 rounded-xl transition shadow-md hover:shadow-lg text-center"
               >
