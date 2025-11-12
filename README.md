@@ -1,23 +1,38 @@
 # Physical Literacy Assessment System
 
-Sistem assessment literasi fisik untuk mengukur kemampuan kognitif, psikologis, sosial, dan memori kerja anak menggunakan Next.js dan Supabase.
+Sistem assessment literasi fisik untuk mengukur kemampuan kognitif, psikologis, sosial, dan memori kerja siswa SMA melalui instrumen penelitian berbasis web menggunakan Next.js dan Supabase.
 
 ## 🌟 Fitur
 
 ### User Side (Tanpa Login)
+- **Halaman Welcome & Informed Consent**: Informasi lengkap tentang penelitian dan persetujuan partisipasi
+- **Estimasi Waktu**: Breakdown waktu per section (~30 menit total)
 - **Halaman Biodata**: Input nama dan umur peserta
 - **Angket Literasi Fisik**: 
   - Domain Kognitif: 10 soal pilihan ganda
-  - Domain Psikologis: 20 soal skala Likert (0-4)
-  - Domain Sosial: 20 soal skala Likert (0-4)
+  - Domain Psikologis: 20 soal skala Likert (0-4) dengan reverse scoring
+  - Domain Sosial: 20 soal skala Likert (0-4) dengan reverse scoring
 - **Digit Span Test**: Test memori kerja dengan mode Forward dan Reversed
 - **Halaman Hasil**: Analisis lengkap menunjukkan domain mana yang perlu ditingkatkan
 
 ### Admin Side (Dengan Login)
 - **Dashboard**: Tabel dan grafik data seluruh peserta
+- **Analytics & Quality**: 
+  - Descriptive statistics (M, SD, range, median, quartiles)
+  - APA-formatted output untuk publikasi
+  - Data quality monitoring
+  - Sample characteristics table
 - **Kelola Pertanyaan**: CRUD untuk menambah, edit, dan hapus pertanyaan
-- **Export Data**: Download data dalam format CSV
+- **Export Data**: Download data dengan codebook lengkap untuk analisis SPSS/R
 - **Statistik**: Rata-rata skor untuk setiap domain
+
+### Research-Grade Features ✨ NEW
+- 📊 **Advanced Analytics Dashboard**: Built-in descriptive statistics
+- 📄 **Comprehensive Codebook**: Auto-generated data dictionary dengan marking untuk reverse-scored items
+- 🔍 **Data Quality Tools**: Straight-lining detection, response time analysis
+- 📋 **Informed Consent System**: Ethical research compliance
+- 🎨 **Professional Design**: Age-appropriate untuk siswa SMA
+- ⏱️ **Time Management**: Clear expectations dan progress tracking
 
 ## 🚀 Setup & Installation
 
@@ -122,7 +137,8 @@ Menyimpan hasil digit span test
 ## 🛣️ Routes
 
 ### Public Routes
-- `/` - Homepage
+- `/` - Homepage dengan design professional
+- `/assessment/welcome` - Welcome page dengan informed consent ✨ NEW
 - `/assessment` - Halaman biodata (mulai assessment)
 - `/assessment/questionnaire` - Halaman angket
 - `/assessment/digit-span` - Digit span test
@@ -131,6 +147,7 @@ Menyimpan hasil digit span test
 ### Admin Routes (Protected)
 - `/admin/login` - Login admin
 - `/admin/dashboard` - Dashboard dengan tabel & grafik
+- `/admin/analytics` - Research analytics & data quality ✨ NEW
 - `/admin/questions` - Kelola pertanyaan (CRUD)
 
 ## 🔒 Security
@@ -152,19 +169,43 @@ Menyimpan hasil digit span test
 
 ## 📝 Development Notes
 
+### Untuk Peneliti
+
+#### Mengakses Analytics Dashboard
+1. Login ke admin panel
+2. Klik tombol "📊 Analytics & Quality"
+3. Tab "Descriptive Statistics": Lihat M, SD, range untuk setiap domain
+4. Tab "Data Quality": Monitor kualitas data
+5. Copy statistik dalam format APA untuk paper
+
+#### Export Data untuk Analisis
+1. Login ke admin dashboard
+2. Klik tombol "Export CSV"
+3. Data sudah dilengkapi codebook dengan:
+   - Variable names yang clear
+   - Marking untuk reverse-scored items (e.g., `psy_q2_r`)
+   - Value labels untuk SPSS
+4. Import ke SPSS, R, atau Excel untuk analisis lanjut
+
+#### Informed Consent
+- Semua peserta harus menyetujui informed consent
+- Consent tersimpan dengan timestamp
+- Edit teks consent di `/app/assessment/welcome/page.tsx`
+- Tambahkan informasi kontak peneliti sebelum pengumpulan data
+
 ### Menambah Pertanyaan Baru
 1. Login ke admin panel
 2. Buka "Kelola Pertanyaan"
 3. Klik "Tambah Pertanyaan"
 4. Isi form dan simpan
-
-### Export Data
-1. Login ke admin dashboard
-2. Klik tombol "Export CSV"
-3. File akan didownload otomatis
+5. **PENTING**: Jika menambah reverse-scored item, update array di `lib/scoring.ts`
 
 ### Customize Scoring
-Edit file `lib/scoring.ts` untuk mengubah kriteria scoring.
+Edit file `lib/scoring.ts` untuk mengubah kriteria scoring atau menambah reverse-scored items.
+
+**Reverse-scored items saat ini:**
+- Psychological: order_index [2, 6, 17, 18]
+- Social: order_index [12, 16]
 
 ## 🐛 Troubleshooting
 
@@ -197,4 +238,15 @@ Untuk pertanyaan atau issue, silakan hubungi developer atau buat issue di reposi
 
 ---
 
-**Dibuat untuk penelitian literasi fisik anak** 🏃‍♂️🧠💪
+**Dibuat untuk penelitian literasi fisik siswa SMA** ��🏃‍♂️
+
+**Latest Updates:**
+- ✅ Research-grade analytics dashboard
+- ✅ Informed consent system
+- ✅ Professional design untuk SMA
+- ✅ Comprehensive data export dengan codebook
+- ✅ Reverse scoring bug fixed
+
+**Dokumentasi Lengkap:**
+- `RESEARCH-UX-FEATURES.md` - Research features & UX improvements
+- `BUGFIX-REVERSE-SCORING.md` - Reverse scoring fix documentation
