@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 
 export default function TestDBPage() {
@@ -199,12 +200,12 @@ export default function TestDBPage() {
         </div>
 
         <div className="mt-6 text-center">
-          <a
+          <Link
             href="/"
             className="text-blue-400 hover:text-blue-300 underline"
           >
             ← Kembali ke Homepage
-          </a>
+          </Link>
         </div>
       </div>
     </div>

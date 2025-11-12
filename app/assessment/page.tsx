@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 export default function BiodataPage() {
   const router = useRouter();
@@ -99,7 +100,7 @@ export default function BiodataPage() {
         </form>
 
         <div className="mt-6 text-center">
-          <a
+          <Link
             href="/"
             className="text-sm text-gray-700 hover:text-gray-900 font-medium transition inline-flex items-center gap-1"
           >
@@ -107,7 +108,7 @@ export default function BiodataPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
             Kembali ke Beranda
-          </a>
+          </Link>
         </div>
       </div>
     </div>

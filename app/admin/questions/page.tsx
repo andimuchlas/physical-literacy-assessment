@@ -26,6 +26,7 @@ export default function QuestionsManagementPage() {
   useEffect(() => {
     checkAuth();
     loadQuestions();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const checkAuth = async () => {

@@ -35,6 +35,7 @@ export default function ResultsPage() {
       setAlreadySaved(true);
     }
     calculateScores();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const calculateScores = async () => {
