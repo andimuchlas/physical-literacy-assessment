@@ -44,11 +44,17 @@ export default function AnalyticsPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [participants, setParticipants] = useState<ParticipantData[]>([]);
-  const [selectedTab, setSelectedTab] = useState<'descriptive' | 'quality' | 'gender'>('descriptive');
+  const [selectedTab, setSelectedTab] = useState<'descriptive' | 'quality' | 'gender' | 'individual'>('descriptive');
+  
+  // State for Individual Responses tab
+  const [selectedParticipantId, setSelectedParticipantId] = useState<number | null>(null);
+  const [questions, setQuestions] = useState<any[]>([]);
+  const [responses, setResponses] = useState<any[]>([]);
 
   useEffect(() => {
     checkAuth();
     fetchData();
+    fetchQuestions();
   }, []);
 
   async function checkAuth() {
@@ -71,6 +77,35 @@ export default function AnalyticsPage() {
       console.error('Error fetching data:', error);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function fetchQuestions() {
+    try {
+      const { data, error } = await supabase
+        .from('questions')
+        .select('*')
+        .order('id', { ascending: true });
+
+      if (error) throw error;
+      setQuestions(data || []);
+    } catch (error) {
+      console.error('Error fetching questions:', error);
+    }
+  }
+
+  async function fetchResponses(participantId: number) {
+    try {
+      const { data, error } = await supabase
+        .from('responses')
+        .select('*')
+        .eq('participant_id', participantId)
+        .order('question_id', { ascending: true });
+
+      if (error) throw error;
+      setResponses(data || []);
+    } catch (error) {
+      console.error('Error fetching responses:', error);
     }
   }
 
@@ -140,6 +175,16 @@ export default function AnalyticsPage() {
             }`}
           >
             🔍 Kualitas Data
+          </button>
+          <button
+            onClick={() => setSelectedTab('individual')}
+            className={`px-6 py-3 rounded-lg font-semibold transition whitespace-nowrap ${
+              selectedTab === 'individual'
+                ? 'bg-blue-600 text-white'
+                : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+            }`}
+          >
+            📝 Detail Jawaban Individual
           </button>
         </div>
 
@@ -747,6 +792,302 @@ export default function AnalyticsPage() {
                 </ul>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* Individual Responses Tab */}
+        {selectedTab === 'individual' && (
+          <div className="space-y-6">
+            {/* Participant Selector */}
+            <div className="bg-white rounded-xl shadow-xl p-6">
+              <h2 className="text-2xl font-bold text-slate-900 mb-4">Pilih Peserta</h2>
+              <select
+                value={selectedParticipantId || ''}
+                onChange={(e) => {
+                  const id = parseInt(e.target.value);
+                  setSelectedParticipantId(id);
+                  if (id) fetchResponses(id);
+                }}
+                className="w-full px-4 py-3 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-lg"
+              >
+                <option value="">-- Pilih Peserta --</option>
+                {participants.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name} (ID: {p.id}) - {p.age} tahun - {p.gender === 'L' ? 'Laki-laki' : 'Perempuan'}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Participant Info & Responses */}
+            {selectedParticipantId && (() => {
+              const participant = participants.find(p => p.id === selectedParticipantId);
+              if (!participant) return null;
+
+              // Group questions by domain
+              const cognitiveQuestions = questions.filter(q => q.domain === 'cognitive');
+              const psychologicalQuestions = questions.filter(q => q.domain === 'psychological');
+              const socialQuestions = questions.filter(q => q.domain === 'social');
+
+              // Create response map for quick lookup
+              const responseMap = new Map(responses.map(r => [r.question_id, r.answer_value]));
+
+              // Reverse scoring arrays (from lib/scoring.ts)
+              const reversePsychologicalOrder = [2, 6, 17, 18];
+              const reverseSocialOrder = [12, 16];
+
+              // Likert labels
+              const likertLabels = ['Sangat Tidak Setuju', 'Tidak Setuju', 'Netral', 'Setuju', 'Sangat Setuju'];
+
+              return (
+                <>
+                  {/* Participant Info Card */}
+                  <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl shadow-xl p-6 border-2 border-blue-200">
+                    <h2 className="text-2xl font-bold text-slate-900 mb-4">Informasi Peserta</h2>
+                    <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+                      <div>
+                        <div className="text-sm text-slate-600">Nama</div>
+                        <div className="text-lg font-bold text-slate-900">{participant.name}</div>
+                      </div>
+                      <div>
+                        <div className="text-sm text-slate-600">Usia & Gender</div>
+                        <div className="text-lg font-bold text-slate-900">
+                          {participant.age} tahun - {participant.gender === 'L' ? '👨 Laki-laki' : '👩 Perempuan'}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-sm text-slate-600">Waktu Pengerjaan</div>
+                        <div className="text-lg font-bold text-slate-900">
+                          {participant.response_time_seconds 
+                            ? `${participant.response_time_seconds}s (~${(participant.response_time_seconds / 60).toFixed(1)} menit)`
+                            : 'N/A'}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-sm text-slate-600">Kualitas Data</div>
+                        <div className="text-lg font-bold">
+                          {participant.response_quality === 'good' && <span className="text-green-600">✅ Good</span>}
+                          {participant.response_quality === 'suspicious' && <span className="text-orange-600">⚠️ Suspicious</span>}
+                          {participant.response_quality === 'invalid' && <span className="text-red-600">❌ Invalid</span>}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Score Summary */}
+                    <div className="mt-4 pt-4 border-t-2 border-slate-200">
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div className="text-center">
+                          <div className="text-sm text-slate-600">Kognitif</div>
+                          <div className="text-2xl font-bold text-blue-600">{participant.cognitive_score}/10</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-sm text-slate-600">Psikologis</div>
+                          <div className="text-2xl font-bold text-purple-600">{participant.psychological_score}/80</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-sm text-slate-600">Sosial</div>
+                          <div className="text-2xl font-bold text-pink-600">{participant.social_score}/80</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-sm text-slate-600">Digit Span</div>
+                          <div className="text-2xl font-bold text-green-600">{participant.digit_span_score}</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Cognitive Domain */}
+                  <div className="bg-white rounded-xl shadow-xl p-6">
+                    <h2 className="text-2xl font-bold text-blue-900 mb-4 flex items-center gap-2">
+                      <span>🧠</span> Domain Kognitif ({participant.cognitive_score}/10)
+                    </h2>
+                    <p className="text-slate-600 mb-4">Multiple choice - Pilih jawaban yang benar</p>
+                    
+                    <div className="space-y-4">
+                      {cognitiveQuestions.map((q, index) => {
+                        const answer = responseMap.get(q.id);
+                        const isCorrect = answer === q.correct_answer;
+                        const options = q.options ? JSON.parse(q.options) : [];
+                        
+                        return (
+                          <div key={q.id} className="border-2 border-slate-200 rounded-lg p-4 hover:border-blue-300 transition">
+                            <div className="flex items-start gap-3">
+                              <div className="text-lg font-bold text-slate-700 min-w-[40px]">Q{index + 1}</div>
+                              <div className="flex-1">
+                                <p className="text-slate-900 font-semibold mb-3">{q.question_text}</p>
+                                
+                                {/* Options */}
+                                <div className="space-y-2 mb-3">
+                                  {options.map((option: string, optIndex: number) => {
+                                    const isSelectedOption = answer === optIndex;
+                                    const isCorrectOption = q.correct_answer === optIndex;
+                                    
+                                    return (
+                                      <div 
+                                        key={optIndex}
+                                        className={`px-3 py-2 rounded border-2 ${
+                                          isSelectedOption && isCorrect ? 'bg-green-50 border-green-500' :
+                                          isSelectedOption && !isCorrect ? 'bg-red-50 border-red-500' :
+                                          isCorrectOption ? 'bg-green-50 border-green-300' :
+                                          'bg-slate-50 border-slate-200'
+                                        }`}
+                                      >
+                                        <span className="font-semibold text-slate-700">{String.fromCharCode(65 + optIndex)}.</span> {option}
+                                        {isSelectedOption && <span className="ml-2 text-blue-600 font-bold">← Jawaban Peserta</span>}
+                                        {isCorrectOption && !isSelectedOption && <span className="ml-2 text-green-600 font-bold">← Jawaban Benar</span>}
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                                
+                                {/* Result */}
+                                <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full font-bold ${
+                                  isCorrect ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                                }`}>
+                                  {isCorrect ? '✅ BENAR' : '❌ SALAH'}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Psychological Domain */}
+                  <div className="bg-white rounded-xl shadow-xl p-6">
+                    <h2 className="text-2xl font-bold text-purple-900 mb-4 flex items-center gap-2">
+                      <span>💭</span> Domain Psikologis ({participant.psychological_score}/80)
+                    </h2>
+                    <p className="text-slate-600 mb-4">Skala Likert 0-4 (Sangat Tidak Setuju → Sangat Setuju)</p>
+                    
+                    <div className="space-y-4">
+                      {psychologicalQuestions.map((q, index) => {
+                        const answer = responseMap.get(q.id);
+                        const isReverse = reversePsychologicalOrder.includes(q.order_index);
+                        const actualValue = answer !== undefined ? answer : 0;
+                        const scoreValue = isReverse ? (4 - actualValue) : actualValue;
+                        
+                        return (
+                          <div key={q.id} className="border-2 border-slate-200 rounded-lg p-4 hover:border-purple-300 transition">
+                            <div className="flex items-start gap-3">
+                              <div className="text-lg font-bold text-slate-700 min-w-[40px]">Q{index + 1}</div>
+                              <div className="flex-1">
+                                <div className="flex items-start justify-between mb-2">
+                                  <p className="text-slate-900 font-semibold flex-1">{q.question_text}</p>
+                                  {isReverse && (
+                                    <span className="ml-2 px-2 py-1 bg-orange-100 text-orange-700 text-xs font-bold rounded">
+                                      REVERSE
+                                    </span>
+                                  )}
+                                </div>
+                                
+                                {/* Likert Scale Visual */}
+                                <div className="flex items-center gap-2 mb-2">
+                                  {[0, 1, 2, 3, 4].map((val) => (
+                                    <div
+                                      key={val}
+                                      className={`flex-1 px-2 py-3 text-center rounded border-2 transition ${
+                                        actualValue === val
+                                          ? 'bg-purple-600 text-white border-purple-700 font-bold scale-105'
+                                          : 'bg-slate-100 border-slate-300 text-slate-600'
+                                      }`}
+                                    >
+                                      {val}
+                                    </div>
+                                  ))}
+                                </div>
+                                
+                                {/* Answer Label */}
+                                <div className="flex items-center justify-between">
+                                  <div>
+                                    <span className="text-slate-600">Jawaban: </span>
+                                    <span className="font-bold text-purple-700">{actualValue} ({likertLabels[actualValue]})</span>
+                                  </div>
+                                  <div>
+                                    <span className="text-slate-600">Nilai: </span>
+                                    <span className="font-bold text-purple-900">{scoreValue} poin</span>
+                                    {isReverse && (
+                                      <span className="ml-2 text-xs text-orange-600">(reversed: 4-{actualValue}={scoreValue})</span>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Social Domain */}
+                  <div className="bg-white rounded-xl shadow-xl p-6">
+                    <h2 className="text-2xl font-bold text-pink-900 mb-4 flex items-center gap-2">
+                      <span>🤝</span> Domain Sosial ({participant.social_score}/80)
+                    </h2>
+                    <p className="text-slate-600 mb-4">Skala Likert 0-4 (Sangat Tidak Setuju → Sangat Setuju)</p>
+                    
+                    <div className="space-y-4">
+                      {socialQuestions.map((q, index) => {
+                        const answer = responseMap.get(q.id);
+                        const isReverse = reverseSocialOrder.includes(q.order_index);
+                        const actualValue = answer !== undefined ? answer : 0;
+                        const scoreValue = isReverse ? (4 - actualValue) : actualValue;
+                        
+                        return (
+                          <div key={q.id} className="border-2 border-slate-200 rounded-lg p-4 hover:border-pink-300 transition">
+                            <div className="flex items-start gap-3">
+                              <div className="text-lg font-bold text-slate-700 min-w-[40px]">Q{index + 1}</div>
+                              <div className="flex-1">
+                                <div className="flex items-start justify-between mb-2">
+                                  <p className="text-slate-900 font-semibold flex-1">{q.question_text}</p>
+                                  {isReverse && (
+                                    <span className="ml-2 px-2 py-1 bg-orange-100 text-orange-700 text-xs font-bold rounded">
+                                      REVERSE
+                                    </span>
+                                  )}
+                                </div>
+                                
+                                {/* Likert Scale Visual */}
+                                <div className="flex items-center gap-2 mb-2">
+                                  {[0, 1, 2, 3, 4].map((val) => (
+                                    <div
+                                      key={val}
+                                      className={`flex-1 px-2 py-3 text-center rounded border-2 transition ${
+                                        actualValue === val
+                                          ? 'bg-pink-600 text-white border-pink-700 font-bold scale-105'
+                                          : 'bg-slate-100 border-slate-300 text-slate-600'
+                                      }`}
+                                    >
+                                      {val}
+                                    </div>
+                                  ))}
+                                </div>
+                                
+                                {/* Answer Label */}
+                                <div className="flex items-center justify-between">
+                                  <div>
+                                    <span className="text-slate-600">Jawaban: </span>
+                                    <span className="font-bold text-pink-700">{actualValue} ({likertLabels[actualValue]})</span>
+                                  </div>
+                                  <div>
+                                    <span className="text-slate-600">Nilai: </span>
+                                    <span className="font-bold text-pink-900">{scoreValue} poin</span>
+                                    {isReverse && (
+                                      <span className="ml-2 text-xs text-orange-600">(reversed: 4-{actualValue}={scoreValue})</span>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </>
+              );
+            })()}
           </div>
         )}
       </div>
