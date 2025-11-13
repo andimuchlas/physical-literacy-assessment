@@ -120,7 +120,7 @@ export default function AnalyticsPage() {
       if (respError) throw respError;
 
       // Create CSV header
-      let csv = 'Participant_ID,Participant_Name,Age,Gender,Question_ID,Question_Number,Domain,Question_Text,Answer_Value,Answer_Label\n';
+      let csv = 'Participant_ID,Participant_Name,Age,Gender,Question_ID,Question_Number,Domain,Question_Text,Answer_Value,Answer_Label,Is_Correct,Correct_Answer\n';
 
       // Process each response
       for (const resp of allResponses || []) {
@@ -134,10 +134,15 @@ export default function AnalyticsPage() {
         
         // Determine answer label based on question type
         let answerLabel = '';
+        let isCorrect = 'N/A';
+        let correctAnswer = 'N/A';
+        
         if (question.question_type === 'multiple_choice') {
           try {
             const options = typeof question.options === 'string' ? JSON.parse(question.options) : (question.options || []);
             answerLabel = options[resp.answer_value] || `Option ${resp.answer_value}`;
+            isCorrect = resp.answer_value === question.correct_answer ? 'BENAR' : 'SALAH';
+            correctAnswer = options[question.correct_answer] || `Option ${question.correct_answer}`;
           } catch (e) {
             answerLabel = `Option ${resp.answer_value}`;
           }
@@ -150,7 +155,7 @@ export default function AnalyticsPage() {
         // Escape CSV fields
         const escapeCsv = (str: string) => `"${str.replace(/"/g, '""')}"`;
         
-        csv += `${resp.participant_id},${escapeCsv(participant.name)},${participant.age},${participant.gender || 'N/A'},${resp.question_id},Q${questionNumber},${domain},${escapeCsv(question.question_text)},${resp.answer_value},${escapeCsv(answerLabel)}\n`;
+        csv += `${resp.participant_id},${escapeCsv(participant.name)},${participant.age},${participant.gender || 'N/A'},${resp.question_id},Q${questionNumber},${domain},${escapeCsv(question.question_text)},${resp.answer_value},${escapeCsv(answerLabel)},${isCorrect},${escapeCsv(correctAnswer)}\n`;
       }
 
       // Download CSV
@@ -164,9 +169,98 @@ export default function AnalyticsPage() {
       link.click();
       document.body.removeChild(link);
 
-      alert('✅ Data berhasil didownload!');
+      alert('✅ Data semua peserta berhasil didownload!');
     } catch (error) {
       console.error('Error downloading CSV:', error);
+      alert('❌ Gagal mendownload data. Cek console untuk detail.');
+    }
+  }
+
+  async function downloadParticipantResponseCSV(participantId: number) {
+    try {
+      const participant = participants.find(p => p.id === participantId);
+      if (!participant) {
+        alert('❌ Peserta tidak ditemukan!');
+        return;
+      }
+
+      // Fetch responses for this participant
+      const { data: participantResponses, error: respError } = await supabase
+        .from('responses')
+        .select('*')
+        .eq('participant_id', participantId)
+        .order('question_id', { ascending: true });
+
+      if (respError) throw respError;
+
+      // Create CSV header
+      let csv = 'Participant_Name,Age,Gender,Question_ID,Question_Number,Domain,Question_Text,Answer_Value,Answer_Label,Is_Correct,Correct_Answer,Score_Value\n';
+
+      // Reverse scoring arrays
+      const reversePsychologicalOrder = [2, 6, 17, 18];
+      const reverseSocialOrder = [12, 16];
+
+      // Process each response
+      for (const resp of participantResponses || []) {
+        const question = questions.find(q => q.id === resp.question_id);
+        
+        if (!question) continue;
+
+        const domain = question.domain;
+        const questionNumber = question.id;
+        
+        // Determine answer label and correctness
+        let answerLabel = '';
+        let isCorrect = 'N/A';
+        let correctAnswer = 'N/A';
+        let scoreValue = 0;
+        
+        if (question.question_type === 'multiple_choice') {
+          try {
+            const options = typeof question.options === 'string' ? JSON.parse(question.options) : (question.options || []);
+            answerLabel = options[resp.answer_value] || `Option ${resp.answer_value}`;
+            isCorrect = resp.answer_value === question.correct_answer ? 'BENAR' : 'SALAH';
+            correctAnswer = options[question.correct_answer] || `Option ${question.correct_answer}`;
+            scoreValue = resp.answer_value === question.correct_answer ? 1 : 0;
+          } catch (e) {
+            answerLabel = `Option ${resp.answer_value}`;
+          }
+        } else {
+          // Likert scale
+          const likertLabels = ['Sangat Tidak Setuju', 'Tidak Setuju', 'Netral', 'Setuju', 'Sangat Setuju'];
+          answerLabel = likertLabels[resp.answer_value] || resp.answer_value.toString();
+          
+          // Calculate score with reverse scoring
+          const isReverse = (domain === 'psychological' && reversePsychologicalOrder.includes(question.order_index)) ||
+                           (domain === 'social' && reverseSocialOrder.includes(question.order_index));
+          scoreValue = isReverse ? (4 - resp.answer_value) : resp.answer_value;
+          
+          if (isReverse) {
+            correctAnswer = `Reverse Scored (4-${resp.answer_value}=${scoreValue})`;
+          }
+        }
+
+        // Escape CSV fields
+        const escapeCsv = (str: string) => `"${str.replace(/"/g, '""')}"`;
+        
+        csv += `${escapeCsv(participant.name)},${participant.age},${participant.gender || 'N/A'},${resp.question_id},Q${questionNumber},${domain},${escapeCsv(question.question_text)},${resp.answer_value},${escapeCsv(answerLabel)},${isCorrect},${escapeCsv(correctAnswer)},${scoreValue}\n`;
+      }
+
+      // Download CSV
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      const fileName = `response_${participant.name.replace(/\s+/g, '_')}_${participantId}_${new Date().toISOString().split('T')[0]}.csv`;
+      link.setAttribute('href', url);
+      link.setAttribute('download', fileName);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      alert(`✅ Data ${participant.name} berhasil didownload!`);
+    } catch (error) {
+      console.error('Error downloading participant CSV:', error);
       alert('❌ Gagal mendownload data. Cek console untuk detail.');
     }
   }
@@ -972,6 +1066,16 @@ export default function AnalyticsPage() {
                           <div className="text-2xl font-bold text-green-600">{participant.digit_span_score}</div>
                         </div>
                       </div>
+                    </div>
+
+                    {/* Download Button for Selected Participant */}
+                    <div className="mt-4 pt-4 border-t-2 border-slate-200">
+                      <button
+                        onClick={() => downloadParticipantResponseCSV(participant.id)}
+                        className="w-full bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-bold transition flex items-center justify-center gap-2"
+                      >
+                        <span>📥</span> Download Data Peserta Ini (CSV)
+                      </button>
                     </div>
                   </div>
 
