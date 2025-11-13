@@ -120,7 +120,11 @@ export default function AnalyticsPage() {
       if (respError) throw respError;
 
       // Create CSV header
-      let csv = 'Participant_ID,Participant_Name,Age,Gender,Question_ID,Question_Number,Domain,Question_Text,Answer_Value,Answer_Label,Is_Correct,Correct_Answer\n';
+      let csv = 'ID_Peserta,Nama_Peserta,Usia,Jenis_Kelamin,ID_Pertanyaan,No_Pertanyaan,Domain,Teks_Pertanyaan,Nilai_Jawaban,Label_Jawaban,Status_Benar,Keterangan_Skor\n';
+
+      // Reverse scoring arrays
+      const reversePsychologicalOrder = [2, 6, 17, 18];
+      const reverseSocialOrder = [12, 16];
 
       // Process each response
       for (const resp of allResponses || []) {
@@ -140,30 +144,39 @@ export default function AnalyticsPage() {
         if (question.question_type === 'multiple_choice') {
           try {
             const options = typeof question.options === 'string' ? JSON.parse(question.options) : (question.options || []);
-            answerLabel = options[resp.answer_value] || `Option ${resp.answer_value}`;
-            isCorrect = resp.answer_value === question.correct_answer ? 'BENAR' : 'SALAH';
-            correctAnswer = options[question.correct_answer] || `Option ${question.correct_answer}`;
+            answerLabel = options[resp.answer_value] || `Opsi ${resp.answer_value}`;
+            isCorrect = resp.answer_value === question.correct_answer ? 'Benar' : 'Salah';
+            correctAnswer = options[question.correct_answer] || `Opsi ${question.correct_answer}`;
           } catch (e) {
-            answerLabel = `Option ${resp.answer_value}`;
+            answerLabel = `Opsi ${resp.answer_value}`;
           }
         } else {
-          // Likert scale
+          // Likert scale - show score value
           const likertLabels = ['Sangat Tidak Setuju', 'Tidak Setuju', 'Netral', 'Setuju', 'Sangat Setuju'];
           answerLabel = likertLabels[resp.answer_value] || resp.answer_value.toString();
+          
+          // Calculate score with reverse scoring
+          const isReverse = (domain === 'psychological' && reversePsychologicalOrder.includes(question.order_index)) ||
+                           (domain === 'social' && reverseSocialOrder.includes(question.order_index));
+          const scoreValue = isReverse ? (4 - resp.answer_value) : resp.answer_value;
+          
+          isCorrect = `Skor: ${scoreValue}`;
+          correctAnswer = isReverse ? `Reverse (4-${resp.answer_value}=${scoreValue})` : `Normal (${scoreValue})`;
         }
 
         // Escape CSV fields
         const escapeCsv = (str: string) => `"${str.replace(/"/g, '""')}"`;
+        const genderLabel = participant.gender === 'L' ? 'Laki-laki' : participant.gender === 'P' ? 'Perempuan' : 'N/A';
         
-        csv += `${resp.participant_id},${escapeCsv(participant.name)},${participant.age},${participant.gender || 'N/A'},${resp.question_id},Q${questionNumber},${domain},${escapeCsv(question.question_text)},${resp.answer_value},${escapeCsv(answerLabel)},${isCorrect},${escapeCsv(correctAnswer)}\n`;
+        csv += `${resp.participant_id},${escapeCsv(participant.name)},${participant.age},${genderLabel},${resp.question_id},Q${questionNumber},${domain},${escapeCsv(question.question_text)},${resp.answer_value},${escapeCsv(answerLabel)},${isCorrect},${escapeCsv(correctAnswer)}\n`;
       }
 
       // Download CSV
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement('a');
       const url = URL.createObjectURL(blob);
       link.setAttribute('href', url);
-      link.setAttribute('download', `all_responses_${new Date().toISOString().split('T')[0]}.csv`);
+      link.setAttribute('download', `semua_respons_${new Date().toISOString().split('T')[0]}.csv`);
       link.style.visibility = 'hidden';
       document.body.appendChild(link);
       link.click();
@@ -194,7 +207,7 @@ export default function AnalyticsPage() {
       if (respError) throw respError;
 
       // Create CSV header
-      let csv = 'Participant_Name,Age,Gender,Question_ID,Question_Number,Domain,Question_Text,Answer_Value,Answer_Label,Is_Correct,Correct_Answer,Score_Value\n';
+      let csv = 'Nama_Peserta,Usia,Jenis_Kelamin,ID_Pertanyaan,No_Pertanyaan,Domain,Teks_Pertanyaan,Nilai_Jawaban,Label_Jawaban,Status_Benar,Keterangan_Skor,Nilai_Skor\n';
 
       // Reverse scoring arrays
       const reversePsychologicalOrder = [2, 6, 17, 18];
@@ -218,12 +231,12 @@ export default function AnalyticsPage() {
         if (question.question_type === 'multiple_choice') {
           try {
             const options = typeof question.options === 'string' ? JSON.parse(question.options) : (question.options || []);
-            answerLabel = options[resp.answer_value] || `Option ${resp.answer_value}`;
-            isCorrect = resp.answer_value === question.correct_answer ? 'BENAR' : 'SALAH';
-            correctAnswer = options[question.correct_answer] || `Option ${question.correct_answer}`;
+            answerLabel = options[resp.answer_value] || `Opsi ${resp.answer_value}`;
+            isCorrect = resp.answer_value === question.correct_answer ? 'Benar' : 'Salah';
+            correctAnswer = options[question.correct_answer] || `Opsi ${question.correct_answer}`;
             scoreValue = resp.answer_value === question.correct_answer ? 1 : 0;
           } catch (e) {
-            answerLabel = `Option ${resp.answer_value}`;
+            answerLabel = `Opsi ${resp.answer_value}`;
           }
         } else {
           // Likert scale
@@ -235,22 +248,26 @@ export default function AnalyticsPage() {
                            (domain === 'social' && reverseSocialOrder.includes(question.order_index));
           scoreValue = isReverse ? (4 - resp.answer_value) : resp.answer_value;
           
+          isCorrect = 'Likert';
           if (isReverse) {
-            correctAnswer = `Reverse Scored (4-${resp.answer_value}=${scoreValue})`;
+            correctAnswer = `Reverse (4-${resp.answer_value}=${scoreValue})`;
+          } else {
+            correctAnswer = `Normal (${scoreValue})`;
           }
         }
 
         // Escape CSV fields
         const escapeCsv = (str: string) => `"${str.replace(/"/g, '""')}"`;
+        const genderLabel = participant.gender === 'L' ? 'Laki-laki' : participant.gender === 'P' ? 'Perempuan' : 'N/A';
         
-        csv += `${escapeCsv(participant.name)},${participant.age},${participant.gender || 'N/A'},${resp.question_id},Q${questionNumber},${domain},${escapeCsv(question.question_text)},${resp.answer_value},${escapeCsv(answerLabel)},${isCorrect},${escapeCsv(correctAnswer)},${scoreValue}\n`;
+        csv += `${escapeCsv(participant.name)},${participant.age},${genderLabel},${resp.question_id},Q${questionNumber},${domain},${escapeCsv(question.question_text)},${resp.answer_value},${escapeCsv(answerLabel)},${isCorrect},${escapeCsv(correctAnswer)},${scoreValue}\n`;
       }
 
       // Download CSV
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement('a');
       const url = URL.createObjectURL(blob);
-      const fileName = `response_${participant.name.replace(/\s+/g, '_')}_${participantId}_${new Date().toISOString().split('T')[0]}.csv`;
+      const fileName = `respons_${participant.name.replace(/\s+/g, '_')}_${participantId}_${new Date().toISOString().split('T')[0]}.csv`;
       link.setAttribute('href', url);
       link.setAttribute('download', fileName);
       link.style.visibility = 'hidden';
