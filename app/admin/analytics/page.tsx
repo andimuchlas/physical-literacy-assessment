@@ -109,6 +109,68 @@ export default function AnalyticsPage() {
     }
   }
 
+  async function downloadAllResponsesCSV() {
+    try {
+      // Fetch all data
+      const { data: allResponses, error: respError } = await supabase
+        .from('responses')
+        .select('*')
+        .order('participant_id', { ascending: true });
+
+      if (respError) throw respError;
+
+      // Create CSV header
+      let csv = 'Participant_ID,Participant_Name,Age,Gender,Question_ID,Question_Number,Domain,Question_Text,Answer_Value,Answer_Label\n';
+
+      // Process each response
+      for (const resp of allResponses || []) {
+        const participant = participants.find(p => p.id === resp.participant_id);
+        const question = questions.find(q => q.id === resp.question_id);
+        
+        if (!participant || !question) continue;
+
+        const domain = question.domain;
+        const questionNumber = question.id;
+        
+        // Determine answer label based on question type
+        let answerLabel = '';
+        if (question.question_type === 'multiple_choice') {
+          try {
+            const options = typeof question.options === 'string' ? JSON.parse(question.options) : (question.options || []);
+            answerLabel = options[resp.answer_value] || `Option ${resp.answer_value}`;
+          } catch (e) {
+            answerLabel = `Option ${resp.answer_value}`;
+          }
+        } else {
+          // Likert scale
+          const likertLabels = ['Sangat Tidak Setuju', 'Tidak Setuju', 'Netral', 'Setuju', 'Sangat Setuju'];
+          answerLabel = likertLabels[resp.answer_value] || resp.answer_value.toString();
+        }
+
+        // Escape CSV fields
+        const escapeCsv = (str: string) => `"${str.replace(/"/g, '""')}"`;
+        
+        csv += `${resp.participant_id},${escapeCsv(participant.name)},${participant.age},${participant.gender || 'N/A'},${resp.question_id},Q${questionNumber},${domain},${escapeCsv(question.question_text)},${resp.answer_value},${escapeCsv(answerLabel)}\n`;
+      }
+
+      // Download CSV
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `all_responses_${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      alert('✅ Data berhasil didownload!');
+    } catch (error) {
+      console.error('Error downloading CSV:', error);
+      alert('❌ Gagal mendownload data. Cek console untuk detail.');
+    }
+  }
+
   const cogScores = participants.map(p => p.cognitive_score);
   const psyScores = participants.map(p => p.psychological_score);
   const socScores = participants.map(p => p.social_score);
@@ -798,6 +860,23 @@ export default function AnalyticsPage() {
         {/* Individual Responses Tab */}
         {selectedTab === 'individual' && (
           <div className="space-y-6">
+            {/* Download Button */}
+            <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-xl shadow-xl p-6 border-2 border-green-200">
+              <div className="flex items-center justify-between flex-wrap gap-4">
+                <div>
+                  <h2 className="text-xl font-bold text-slate-900 mb-1">📥 Export Data</h2>
+                  <p className="text-slate-600">Download seluruh data respons semua peserta dalam format CSV</p>
+                </div>
+                <button
+                  onClick={downloadAllResponsesCSV}
+                  disabled={participants.length === 0 || questions.length === 0}
+                  className="bg-green-600 hover:bg-green-700 disabled:bg-slate-400 text-white px-6 py-3 rounded-lg font-bold transition flex items-center gap-2"
+                >
+                  <span>💾</span> Download All Responses CSV
+                </button>
+              </div>
+            </div>
+
             {/* Participant Selector */}
             <div className="bg-white rounded-xl shadow-xl p-6">
               <h2 className="text-2xl font-bold text-slate-900 mb-4">Pilih Peserta</h2>
@@ -808,11 +887,11 @@ export default function AnalyticsPage() {
                   setSelectedParticipantId(id);
                   if (id) fetchResponses(id);
                 }}
-                className="w-full px-4 py-3 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-lg"
+                className="w-full px-4 py-3 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-lg bg-white text-slate-900 font-semibold"
               >
-                <option value="">-- Pilih Peserta --</option>
+                <option value="" className="text-slate-500">-- Pilih Peserta --</option>
                 {participants.map((p) => (
-                  <option key={p.id} value={p.id}>
+                  <option key={p.id} value={p.id} className="text-slate-900 font-semibold">
                     {p.name} (ID: {p.id}) - {p.age} tahun - {p.gender === 'L' ? 'Laki-laki' : 'Perempuan'}
                   </option>
                 ))}
@@ -907,7 +986,14 @@ export default function AnalyticsPage() {
                       {cognitiveQuestions.map((q, index) => {
                         const answer = responseMap.get(q.id);
                         const isCorrect = answer === q.correct_answer;
-                        const options = q.options ? JSON.parse(q.options) : [];
+                        // Handle options - could be string or already parsed array
+                        let options = [];
+                        try {
+                          options = typeof q.options === 'string' ? JSON.parse(q.options) : (q.options || []);
+                        } catch (e) {
+                          console.error('Error parsing options for question', q.id, e);
+                          options = [];
+                        }
                         
                         return (
                           <div key={q.id} className="border-2 border-slate-200 rounded-lg p-4 hover:border-blue-300 transition">
