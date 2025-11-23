@@ -11,6 +11,8 @@ export interface Participant {
   name: string;
   age: number;
   gender?: string;
+  weight?: number;
+  height?: number;
   cognitive_score: number;
   psychological_score: number;
   social_score: number;

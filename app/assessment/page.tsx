@@ -9,6 +9,8 @@ export default function BiodataPage() {
   const [name, setName] = useState('');
   const [age, setAge] = useState('');
   const [gender, setGender] = useState('');
+  const [weight, setWeight] = useState('');
+  const [height, setHeight] = useState('');
   const [error, setError] = useState('');
   const [startTime] = useState(Date.now());
 
@@ -30,11 +32,25 @@ export default function BiodataPage() {
       setError('Jenis kelamin harus dipilih');
       return;
     }
+
+    const weightNum = parseFloat(weight);
+    if (!weight || weightNum < 20 || weightNum > 200) {
+      setError('Berat badan harus antara 20-200 kg');
+      return;
+    }
+
+    const heightNum = parseFloat(height);
+    if (!height || heightNum < 50 || heightNum > 250) {
+      setError('Tinggi badan harus antara 50-250 cm');
+      return;
+    }
     
     // Store biodata in sessionStorage
     sessionStorage.setItem('participantName', name);
     sessionStorage.setItem('participantAge', age);
     sessionStorage.setItem('participantGender', gender);
+    sessionStorage.setItem('participantWeight', weight);
+    sessionStorage.setItem('participantHeight', height);
     sessionStorage.setItem('assessmentStartTime', startTime.toString());
     
     // Navigate to questionnaire
@@ -87,6 +103,42 @@ export default function BiodataPage() {
               min="5"
               max="20"
             />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="weight" className="block text-sm font-semibold text-gray-900 mb-2">
+                Berat Badan (kg)
+              </label>
+              <input
+                type="number"
+                id="weight"
+                value={weight}
+                onChange={(e) => setWeight(e.target.value)}
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-gray-900"
+                placeholder="Contoh: 55"
+                min="20"
+                max="200"
+                step="0.1"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="height" className="block text-sm font-semibold text-gray-900 mb-2">
+                Tinggi Badan (cm)
+              </label>
+              <input
+                type="number"
+                id="height"
+                value={height}
+                onChange={(e) => setHeight(e.target.value)}
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-gray-900"
+                placeholder="Contoh: 165"
+                min="50"
+                max="250"
+                step="0.1"
+              />
+            </div>
           </div>
 
           <div>

@@ -205,6 +205,10 @@ export default function ResultsPage() {
       console.log('  - Straight-lining:', hasStraightLining ? '⚠️ DETECTED' : '✅ OK');
       console.log('  - Response quality:', responseQuality);
 
+      // Get weight and height from sessionStorage
+      const weight = sessionStorage.getItem('participantWeight');
+      const height = sessionStorage.getItem('participantHeight');
+
       // Insert participant with quality indicators
       const { data: participant, error: participantError } = await supabase
         .from('participants')
@@ -213,6 +217,8 @@ export default function ResultsPage() {
             name,
             age,
             gender: gender || null,
+            weight: weight ? parseFloat(weight) : null,
+            height: height ? parseFloat(height) : null,
             cognitive_score: cogScore,
             psychological_score: psyScore,
             social_score: socScore,
