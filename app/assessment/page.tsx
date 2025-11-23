@@ -23,8 +23,8 @@ export default function BiodataPage() {
     }
     
     const ageNum = parseInt(age);
-    if (!age || ageNum < 5 || ageNum > 20) {
-      setError('Umur harus antara 5-20 tahun');
+    if (!age || ageNum < 5 || ageNum > 25) {
+      setError('Umur harus antara 5-25 tahun');
       return;
     }
 
@@ -99,9 +99,9 @@ export default function BiodataPage() {
               value={age}
               onChange={(e) => setAge(e.target.value)}
               className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-gray-900"
-              placeholder="Masukkan umur (5-20 tahun)"
+              placeholder="Masukkan umur (5-25 tahun)"
               min="5"
-              max="20"
+              max="25"
             />
           </div>
 
